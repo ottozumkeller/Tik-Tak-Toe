@@ -6,8 +6,8 @@
 
 #define PLAYER1		'X' // player 1 mark (must be capital)
 #define PLAYER2		'O' // player 2 mark (must be capital)
-#define COLUMNS		19  // 13 - 166
-#define ROWS		9   // 7 - 46
+#define COLUMNS		19
+#define ROWS		9
 
 int end(char mrk[]) {
 	int end = 1;
