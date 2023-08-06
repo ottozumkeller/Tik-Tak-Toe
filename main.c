@@ -42,12 +42,12 @@ void main() {
 	char mrk[9] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
 	SetWindowLongW(GetConsoleWindow(), GWL_STYLE, WS_VISIBLE | WS_CAPTION | WS_SYSMENU);
 	system("mode 13,1");
-	print(mrk, '\0');
+	print(mrk, 0);
 	do {
 		printf("\x1b[%d;%dH", y, x);
 		switch (_getch()) {
 			case 224:
-			{
+				{
 				int d = _getch() - 76;
 				if (d % 2) {
 					int nx = x + d * 4;
