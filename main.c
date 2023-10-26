@@ -4,7 +4,6 @@
 #include<stdio.h>
 #include<windows.h>
 #include<conio.h>
-#include<ctype.h>
 
 #define PLAYER1 'O'
 #define PLAYER2 'X'
@@ -15,49 +14,43 @@ int end(int mrk[]) {
     int end = 1;
     for (int i = 0; i < 9; i++) {
         int j = 3 * i;
-        if (i < 3 
-            && (((mrk[j] & mrk[j + 1] & mrk[j + 2]))
-            || ((mrk[i] & mrk[i + 3] & mrk[i + 6]))
-            || ((mrk[0] & mrk[4] & mrk[8]))
-            || ((mrk[2] & mrk[4] & mrk[6]))))
-        {
+        if (i < 3 && (((mrk[j] & mrk[j + 1] & mrk[j + 2])) || ((mrk[i] & mrk[i + 3] & mrk[i + 6])) || ((mrk[0] & mrk[4] & mrk[8])) || ((mrk[2] & mrk[4] & mrk[6])))) {
             return 2;
-        }
-        else if (!mrk[i]) {
+        } else if (!mrk[i]) {
             end = 0;
         }
     }
     return end;
 }
 
-void print(int mrk[], int plyr, int mult) {
-     printf("\x1b[8;%d;%dt\x1b]2; \a\x1b[2J\x1b[%dH\x1b(0", ROWS, COLUMNS, (ROWS - 7) / 2 + 1);
+void print(int mrk[], int plyr) {
+    printf("\x1b[8;%d;%dt\x1b]2; \a\x1b[2J\x1b[%dH\x1b(0", ROWS, COLUMNS, (ROWS - 7) / 2 + 1);
+    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), (COORD) { COLUMNS, ROWS });
     char args[7][15] = {
         "lqqqwqqqwqqqk\n",
-        "x # x # x # x\n",
+        "x   x   x   x\n",
         "tqqqnqqqnqqqu\n",
-        "x # x # x # x\n",
+        "x   x   x   x\n",
         "tqqqnqqqnqqqu\n",
-        "x # x # x # x\n",
+        "x   x   x   x\n",
         "mqqqvqqqvqqqj\r"
     };
     int index = 0;
     for (int i = 0; i < 7; i++) {
         int plyr_arr[3] = { ' ', PLAYER1, PLAYER2 };
-        if (end(mrk) || !mult) {
-             sprintf(args[i], "\n");
-             sprintf(args[1], !end(mrk) || mult ? "SELECT MODE\n" : (end(mrk) == 2 ? "%c WINS\n" : "TIE\n"), plyr_arr[plyr]);
-             sprintf(args[3], "[1]   [2]\n");
-             sprintf(args[5], "PLAYER(S)\n");
-        }
-        else {
-            for (int j = 0; j < COLUMNS; j++) {
-                if (args[i][j] == '#') {
+        if (!end(mrk) ^ !plyr) {
+            for (int j = 2; j < 11; j++) {
+                if (args[i][j - 2] == 'x') {
                     args[i][j] = plyr_arr[mrk[index++]];
                 }
             }
+        } else {
+            sprintf(args[i], "\n");
+            sprintf(args[1], !plyr ? "SELECT MODE\n" : (end(mrk) == 2 ? "%c WINS!\n" : "TIE\n"), plyr_arr[plyr]);
+            sprintf(args[3], "[1]   [2]\n");
+            sprintf(args[5], "PLAYER(S)\n");
         }
-         printf("\x1b[%dG%s", (COLUMNS - strlen(args[i])) / 2 + 2, args[i]);
+        printf("\x1b[%dG%s", (COLUMNS - strlen(args[i])) / 2 + 2, args[i]);
     }
 }
 
@@ -79,7 +72,7 @@ int minimax(int mrk[], int is_max) {
 }
 
 int best_move(int mrk[]) {
-    int best = -1, move;
+    int best = -1, move = 0;
     for (int i = 0; i < 9; i++) {
         if (!mrk[i]) {
             mrk[i] = 2;
@@ -96,74 +89,76 @@ int best_move(int mrk[]) {
 
 int move(int dir, int pos, int step, int border_1, int border_2) {
     int npos = pos + (dir / abs(dir)) * step;
-    if (npos > border_1 + 1 && npos < border_2) {
-        pos = npos;
+    if (npos > border_1 && npos < border_2) {
+        return npos;
     }
     return pos;
 }
 
 void main() {
-     SetWindowLongW(GetConsoleWindow(), GWL_STYLE, WS_VISIBLE | WS_CAPTION | WS_SYSMENU);
+    SetWindowLongW(GetConsoleWindow(), GWL_STYLE, WS_VISIBLE | WS_CAPTION | WS_SYSMENU);
     int x = (COLUMNS + 1) / 2 - 3, y = (ROWS + 1) / 2, mrk[9] = { 0 }, mult = 0, plyr = 0;
     while (1) {
-        do {
-            print(mrk, plyr, mult);
-            printf("\x1b[?25h\x1b[%d;%dH", y, x);
-            if (mult) {
-                if (mult == 1 && plyr == 2) {
-                    mrk[best_move(mrk)] = 2;
-                    print(mrk, plyr, mult);
-                    plyr = ((plyr - 1) ^ !end(mrk)) + 1;
-                } else {
-                    int c = _getch();
-                    if (c == 224) {
+        int c;
+        if (end(mrk) || !plyr) {
+            x = (COLUMNS + 1) / 2 - (3 - 6 * mult);
+            y = (ROWS + 1) / 2;
+        }
+        print(mrk, plyr);
+        printf("\x1b[%d;%dH", y, x);
+        if (end(mrk) || mult || plyr != 2) {
+            c = _getch();
+        }
+        if (!end(mrk) && plyr) {
+            if (!mult && plyr == 2) {
+                mrk[best_move(mrk)] = 2;
+                plyr = ((plyr - 1) ^ !end(mrk)) + 1;
+            } else {
+                switch (c) {
+                    case 224:;
                         int d = _getch() - 76;
                         if (d % 2) {
                             x = move(d, x, 4, (COLUMNS - 13) / 2, COLUMNS - (COLUMNS - 13) / 2);
-                        } else {
+                        }
+                        else {
                             y = move(d, y, 2, (ROWS - 7) / 2, ROWS - (ROWS - 7) / 2);
                         }
-                    } else if (c == 13) {
+                    break;
+                    case 13:;
                         int pos = ((y - (ROWS - 7) / 2) / 3) * 3 + (x - (COLUMNS - 13) / 2) % 3;
                         if (!mrk[pos]) {
                             mrk[pos] = plyr;
-                            print(mrk, plyr, mult);
                             plyr = ((plyr - 1) ^ !end(mrk)) + 1;
                         }
-                    } else if (isxdigit(c)) {
-                        int d = _getch();
-                        if (isxdigit(d)) {
-                            char hex[9] = { 'c', 'o', 'l', 'o', 'r', ' ', c, d, 0 };
-                             system(hex);
-                        }
-                    }
+                    break;
                 }
-            } else {
-                switch (_getch()) {
-                case 224:
-                {
+            }
+        } else {
+            switch (c) {
+                case 224:; 
                     int k = _getch() - 76;
                     if (k % 2) {
-                        x = move(k, x, 6, (COLUMNS - 9) / 2, COLUMNS - (COLUMNS - 9) / 2);
+                        x = move(k, x, 6, (COLUMNS + 1) / 2 - 3, (COLUMNS + 1) / 2 + 3);
                     }
-                }
+                    mult ^= 1;
                 break;
-                case 13:
-                {
-                    mult = (x < (COLUMNS + 1) / 2) + 1;
-                    x = (COLUMNS + 1) / 2;
+                case 13:;
                     for (int i = 0; i < 9; i++) {
                         mrk[i] = 0;
                     }
+                    x = (COLUMNS + 1) / 2;
                     srand(GetTickCount64());
-                    plyr = mult == 2 ? rand() % 2 + 1 : 1;
-                }
+                    plyr = mult ? rand() % 2 + 1 : 1;
                 break;
-                }
             }
-        } while (!end(mrk));
-        x = mult ? (mult == 1 ? (COLUMNS + 1) / 2 - 4 : (COLUMNS + 1) / 2 - 4) : x;
-        y = (ROWS + 1) / 2;
-        mult = 0;
+        }
+        if (isxdigit(c)) {
+            printf("%c\x1b[D", toupper(c));
+            int d = _getch();
+            if (isxdigit(d)) {
+                const int col_arr[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+                printf("\x1b[%dm\x1b[%dm", col_arr[((c - 48) % 39) % 8] + (c > 55 ? 100 : 40), col_arr[((d - 48) % 39) % 8] + (d > 55 ? 90 : 30));
+            }
+        }
     }
 }
