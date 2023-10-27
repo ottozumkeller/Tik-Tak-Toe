@@ -87,12 +87,9 @@ int best_move(int mrk[]) {
     return move;
 }
 
-int move(int dir, int pos, int step, int border_1, int border_2) {
+int move(int dir, int pos, int step, int lbound, int ubound) {
     int npos = pos + (dir / abs(dir)) * step;
-    if (npos > border_1 && npos < border_2) {
-        return npos;
-    }
-    return pos;
+    return npos > lbound && npos < ubound ? npos : pos;
 }
 
 void main() {
@@ -115,41 +112,39 @@ void main() {
                 plyr = ((plyr - 1) ^ !end(mrk)) + 1;
             } else {
                 switch (c) {
-                    case 224:;
-                        int d = _getch() - 76;
-                        if (d % 2) {
-                            x = move(d, x, 4, (COLUMNS - 13) / 2, COLUMNS - (COLUMNS - 13) / 2);
-                        }
-                        else {
-                            y = move(d, y, 2, (ROWS - 7) / 2, ROWS - (ROWS - 7) / 2);
-                        }
+                case 224:;
+                    int d = _getch() - 76;
+                    if (d % 2) {
+                        x = move(d, x, 4, (COLUMNS - 13) / 2, COLUMNS - (COLUMNS - 13) / 2);
+                    }
+                    else {
+                        y = move(d, y, 2, (ROWS - 7) / 2, ROWS - (ROWS - 7) / 2);
+                    }
                     break;
-                    case 13:;
-                        int pos = ((y - (ROWS - 7) / 2) / 3) * 3 + (x - (COLUMNS - 13) / 2) % 3;
-                        if (!mrk[pos]) {
-                            mrk[pos] = plyr;
-                            plyr = ((plyr - 1) ^ !end(mrk)) + 1;
-                        }
-                    break;
+                case 13:;
+                    int pos = ((y - (ROWS - 7) / 2) / 3) * 3 + (x - (COLUMNS - 13) / 2) % 3;
+                    if (!mrk[pos]) {
+                        mrk[pos] = plyr;
+                        plyr = ((plyr - 1) ^ !end(mrk)) + 1;
+                    }
                 }
             }
         } else {
             switch (c) {
-                case 224:; 
-                    int k = _getch() - 76;
-                    if (k % 2) {
-                        x = move(k, x, 6, (COLUMNS + 1) / 2 - 3, (COLUMNS + 1) / 2 + 3);
-                    }
-                    mult ^= 1;
+            case 224:;
+                int k = _getch() - 76;
+                if (k % 2) {
+                    x = move(k, x, 6, (COLUMNS + 1) / 2 - 3, (COLUMNS + 1) / 2 + 3);
+                }
+                mult ^= 1;
                 break;
-                case 13:;
-                    for (int i = 0; i < 9; i++) {
-                        mrk[i] = 0;
-                    }
-                    x = (COLUMNS + 1) / 2;
-                    srand(GetTickCount64());
-                    plyr = mult ? rand() % 2 + 1 : 1;
-                break;
+            case 13:;
+                for (int i = 0; i < 9; i++) {
+                    mrk[i] = 0;
+                }
+                x = (COLUMNS + 1) / 2;
+                srand(GetTickCount64());
+                plyr = mult ? rand() % 2 + 1 : 1;
             }
         }
         if (isxdigit(c)) {
