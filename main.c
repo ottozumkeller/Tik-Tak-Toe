@@ -25,9 +25,9 @@ int end(int mrk[]) {
 
 int minimax(int mrk[], int is_max) {
     int best = 1 - 2 * is_max;
-    int scores[2] = { 0, best };
-    if (end(mrk)) {
-        return scores[end(mrk) - 1];
+    int win = end(mrk);
+    if (win) {
+        return (win - 1) * best;
     }
     for (int i = 0; i < 9; i++) {
         if (!mrk[i]) {
@@ -139,10 +139,10 @@ void main() {
         }
         if (isxdigit(c)) {
             printf("%c\x1b[D", toupper(c));
-            int bgc = _getch();
-            if (isxdigit(bgc) && bgc != c) {
-                const int col_arr[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-                printf("\x1b[%dm\x1b[%dm", col_arr[((c - 48) % 39) % 8] + (c > 55 ? 100 : 40), col_arr[((bgc - 48) % 39) % 8] + (bgc > 55 ? 90 : 30));
+            const int bgc = c % 39 - 9;
+            const int fgc = (c = _getch()) % 39 - 9;
+            if (isxdigit(c) && bgc != fgc) {
+                printf("\x1b[48;5;%dm\x1b[38;5;%dm", bgc, fgc);
             }
         }
     }
