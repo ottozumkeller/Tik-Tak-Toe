@@ -51,7 +51,7 @@ void main() {
         printf("\x1b[8;%d;%dt", ROWS, COLUMNS);
         SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), (COORD) { COLUMNS, ROWS });
         printf("\x1b]2; \a\x1b[2J\x1b[%dH\x1b(0", (ROWS - 5) / 2);
-        char args[7][15] = {
+        char rows[7][15] = {
             "lqqqwqqqwqqqk\n",
             "x   x   x   x\n",
             "tqqqnqqqnqqqu\n",
@@ -65,17 +65,17 @@ void main() {
             int plyr_arr[3] = { ' ', PLAYER1, PLAYER2 };
             if (!end(mrk) ^ !plyr) {
                 for (int j = 2; j < 11; j++) {
-                    if (args[i][j - 2] == 'x') {
-                        args[i][j] = plyr_arr[mrk[index++]];
+                    if (rows[i][j - 2] == 'x') {
+                        rows[i][j] = plyr_arr[mrk[index++]];
                     }
                 }
             } else {
-                sprintf(args[i], "\n");
-                sprintf(args[1], !plyr ? "SELECT MODE\n" : (end(mrk) == 2 ? "%c WINS!\n" : "TIE\n"), plyr_arr[plyr]);
-                sprintf(args[3], "[1]   [2]\n");
-                sprintf(args[5], "PLAYER(S)\r");
+                sprintf(rows[i], "\n");
+                sprintf(rows[1], !plyr ? "SELECT MODE\n" : (end(mrk) == 2 ? "%c WINS!\n" : "TIE\n"), plyr_arr[plyr]);
+                sprintf(rows[3], "[1]   [2]\n");
+                sprintf(rows[5], "PLAYER(S)\r");
             }
-            printf("\x1b[%dG%s", (COLUMNS - strlen(args[i])) / 2 + 2, args[i]);
+            printf("\x1b[%dG%s", (COLUMNS - strlen(rows[i])) / 2 + 2, rows[i]);
         }
         printf("\x1b[%d;%dH", y, x);
         const int inp = end(mrk) || mult || plyr != 2 ? _getch() : 0;
@@ -130,7 +130,7 @@ void main() {
         }
         if (isxdigit(inp)) {
             printf("%c\x1b[D", toupper(inp));
-             const int fgc = _getch();
+            const int fgc = _getch();
             if (isxdigit(fgc) && inp != fgc) {
                 printf("\x1b[48;5;%dm\x1b[38;5;%dm", inp % 39 - 9, fgc % 39 - 9);
             }
