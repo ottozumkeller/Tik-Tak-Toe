@@ -13,7 +13,7 @@
 int end(int mrk[]) {
     int end = 1;
     for (int i = 0; i < 9; i++) {
-        int j = 3 * i;
+        const int j = 3 * i;
         if (i < 3 && (((mrk[j] & mrk[j + 1] & mrk[j + 2])) || ((mrk[i] & mrk[i + 3] & mrk[i + 6])) || ((mrk[0] & mrk[4] & mrk[8])) || ((mrk[2] & mrk[4] & mrk[6])))) {
             return 2;
         } else if (!mrk[i]) {
@@ -25,14 +25,14 @@ int end(int mrk[]) {
 
 int minimax(int mrk[], int is_max) {
     int best = 1 - 2 * is_max;
-    int win = end(mrk);
+    const int win = end(mrk);
     if (win) {
         return (win - 1) * best;
     }
     for (int i = 0; i < 9; i++) {
         if (!mrk[i]) {
             mrk[i] = is_max + 1;
-            int score = minimax(mrk, !is_max);
+            const int score = minimax(mrk, !is_max);
             mrk[i] = 0;
             best = is_max ? max(score, best) : min(score, best);
         }
@@ -62,7 +62,7 @@ void main() {
         };
         int index = 0;
         for (int i = 0; i < 7; i++) {
-            int plyr_arr[3] = { ' ', PLAYER1, PLAYER2 };
+            static const int plyr_arr[3] = { ' ', PLAYER1, PLAYER2 };
             if (!end(mrk) ^ !plyr) {
                 for (int j = 2; j < 11; j++) {
                     if (rows[i][j - 2] == 'x') {
@@ -85,7 +85,7 @@ void main() {
                 for (int i = 0; i < 9; i++) {
                     if (!mrk[i]) {
                         mrk[i] = 2;
-                        int score = minimax(mrk, 0);
+                        const int score = minimax(mrk, 0);
                         mrk[i] = 0;
                         if (score > best) {
                             best = score;
@@ -102,13 +102,14 @@ void main() {
                     if (d % 2) {
                         d *= 4;
                         if (abs(x - (COLUMNS + 1) / 2 + d) < 5) x += d; // for non wrapping cursor change "d * -8" to "0"
-                    } else {
+                    }
+                    else {
                         d /= 2;
                         if (abs(y - (ROWS + 1) / 2 + d) < 3) y += d; // for non wrapping cursor change "-d" to "0"
                     }
                     break;
                 case 13:;
-                    int pos = ((y - (ROWS - 7) / 2) / 3) * 3 + (x - (COLUMNS - 13) / 2) % 3;
+                    const int pos = ((y - (ROWS - 7) / 2) / 3) * 3 + (x - (COLUMNS - 13) / 2) % 3;
                     if (!mrk[pos]) {
                         plyr = (((mrk[pos] = plyr) - 1) ^ !end(mrk)) + 1;
                     }
