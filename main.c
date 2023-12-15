@@ -48,9 +48,9 @@ void main() {
             x = (COLUMNS + 1) / 2 - (3 - 6 * mult);
             y = (ROWS + 1) / 2;
         }
-        printf("\x1b[8;%d;%dt", ROWS, COLUMNS);
+        printf("\33[8;%d;%dt", ROWS, COLUMNS);
         SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), (COORD) { COLUMNS, ROWS });
-        printf("\x1b]2; \a\x1b[2J\x1b[%dH\x1b(0", (ROWS - 5) / 2);
+        printf("\33]2; \a\33[2J\33[%dH\33(0", (ROWS - 5) / 2);
         char rows[7][15] = {
             "lqqqwqqqwqqqk\n",
             "x   x   x   x\n",
@@ -75,9 +75,9 @@ void main() {
                 sprintf(rows[3], "[1]   [2]\n");
                 sprintf(rows[5], "PLAYER(S)\r");
             }
-            printf("\x1b[%dG%s", (COLUMNS - strlen(rows[i])) / 2 + 2, rows[i]);
+            printf("\33[%dG%s", (COLUMNS - strlen(rows[i])) / 2 + 2, rows[i]);
         }
-        printf("\x1b[%d;%dH", y, x);
+        printf("\33[%d;%dH", y, x);
         const int inp = end(mrk) || mult || plyr != 2 ? _getch() : 0;
         if (!end(mrk) && plyr) {
             if (!mult && plyr == 2) {
@@ -102,8 +102,7 @@ void main() {
                     if (d % 2) {
                         d *= 4;
                         if (abs(x - (COLUMNS + 1) / 2 + d) < 5) x += d; // for non wrapping cursor change "d * -8" to "0"
-                    }
-                    else {
+                    } else {
                         d /= 2;
                         if (abs(y - (ROWS + 1) / 2 + d) < 3) y += d; // for non wrapping cursor change "-d" to "0"
                     }
@@ -130,10 +129,10 @@ void main() {
             }
         }
         if (isxdigit(inp)) {
-            printf("%c\x1b[D", toupper(inp));
+            printf("%c\33[D", toupper(inp));
             const int fgc = _getch();
             if (isxdigit(fgc) && inp != fgc) {
-                printf("\x1b[48;5;%dm\x1b[38;5;%dm", inp % 39 - 9, fgc % 39 - 9);
+                printf("\33[48;5;%dm\33[38;5;%dm", inp % 39 - 9, fgc % 39 - 9);
             }
         }
     }
