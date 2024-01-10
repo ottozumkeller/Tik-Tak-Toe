@@ -71,11 +71,11 @@ void main() {
                 }
             } else {
                 sprintf(rows[i], "\n");
-                sprintf(rows[1], !plyr ? "SELECT MODE\n" : (end(mrk) == 2 ? "%c WINS!\n" : "TIE\n"), plyr_arr[plyr]);
-                sprintf(rows[3], "[1]   [2]\n");
-                sprintf(rows[5], "PLAYER(S)\r");
+                sprintf(rows[1], !plyr ? " SELECT MODE \n" : (end(mrk) == 2 ? "   %c WINS!  \n" : "     TIE     \n"), plyr_arr[plyr]);
+                sprintf(rows[3], "  [1]   [2]  \n");
+                sprintf(rows[5], "  PLAYER(S)  \r");
             }
-            printf("\33[%dG%s", (COLUMNS - strlen(rows[i])) / 2 + 2, rows[i]);
+            printf("\33[%dG%s", (COLUMNS - 11) / 2, rows[i]);
         }
         printf("\33[%d;%dH", y, x);
         const int inp = end(mrk) || mult || plyr != 2 ? _getch() : 0;
