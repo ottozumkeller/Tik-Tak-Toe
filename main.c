@@ -5,10 +5,8 @@
 #include<windows.h>
 #include<conio.h>
 
-#define PLAYER1 'O'
-#define PLAYER2 'X'
-
-int columns = 0, rows = 0, x = 0, y = 0, mrk[9] = { 0 }, mult = 0, plyr = 0;
+#define PLYR1 'O'
+#define PLYR2 'X'
 
 int end(int mrk[]) {
     int end = 1;
@@ -40,68 +38,51 @@ int minimax(int mrk[], int is_max) {
     return best;
 }
 
-void draw() {
-    char cmd[16];
-    sprintf(cmd, "mode %d,%d", columns, rows);
-    system(cmd);
-    printf("\33[2J\33]8;%d;%dt\33]0; \a\33[%dH\33(0", columns, rows, (rows - 5) / 2);
-    char lines[7][15] = {
-        "lqqqwqqqwqqqk\n",
-        "x   x   x   x\n",
-        "tqqqnqqqnqqqu\n",
-        "x   x   x   x\n",
-        "tqqqnqqqnqqqu\n",
-        "x   x   x   x\n",
-        "mqqqvqqqvqqqj\r"
-    };
-    int index = 0;
-    for (int i = 0; i < 7; i++) {
-        static const int plyr_arr[3] = { ' ', PLAYER1, PLAYER2 };
-        if (!end(mrk) ^ !plyr) {
-            for (int j = 2; j < 11; j++) {
-                if (lines[i][j - 2] == 'x') {
-                    lines[i][j] = plyr_arr[mrk[index++]];
-                }
-            }
-        }
-        else {
-            sprintf(lines[i], "\n");
-            sprintf(lines[1], !plyr ? " SELECT MODE \n" : (end(mrk) == 2 ? "   %c WINS!  \n" : "     TIE!    \n"), plyr_arr[plyr]);
-            sprintf(lines[3], "  [1]   [2]  \n");
-            sprintf(lines[5], "  PLAYER(S)  \r");
-        }
-        printf("\33[%dG%s", (columns - 11) / 2, lines[i]);
-    }
-    if (end(mrk) || !plyr) {
-        x = (columns + 1) / 2 - (3 - 6 * mult);
-        y = (rows + 1) / 2;
-    }
-    printf("\33[%d;%dH", y, x);
-}
-
-DWORD WINAPI update_size() {
-    CONSOLE_SCREEN_BUFFER_INFO info;
+void main() {
+    int columns = 0, rows = 0, x = 0, y = 0, mrk[9] = { 0 }, mult = 0, plyr = 0;
     while (1) {
+        CONSOLE_SCREEN_BUFFER_INFO info;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
         int ncolumns = info.srWindow.Right - info.srWindow.Left + 1;
         int nrows = info.srWindow.Bottom - info.srWindow.Top + 1;
-        if (abs(columns - ncolumns) > 2 || ncolumns < 15 || abs(rows - nrows) > 1 || nrows < 7) {
-            ncolumns = ncolumns < 15 ? 15 : ncolumns;
-            nrows = nrows < 7 ? 7 : nrows;
-            x = (x - (columns + 1) / 2) + (ncolumns + 1) / 2;
-            y = (y - (rows + 1) / 2) + (nrows + 1) / 2;
-            columns = ncolumns;
-            rows = nrows;
-            draw();
+        x += (ncolumns + 1) / 2 - (columns + 1) / 2;
+        y += (nrows + 1) / 2 - (rows + 1) / 2;
+        columns = ncolumns;
+        rows = nrows;
+        SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), (COORD) {columns, rows});
+        printf("\33[2J\33]0; \a\33[%dH\33(0", (rows - 5) / 2);
+        char lines[7][15] = {
+            "lqqqwqqqwqqqk\n",
+            "x   x   x   x\n",
+            "tqqqnqqqnqqqu\n",
+            "x   x   x   x\n",
+            "tqqqnqqqnqqqu\n",
+            "x   x   x   x\n",
+            "mqqqvqqqvqqqj\r"
+        };
+        int index = 0;
+        for (int i = 0; i < 7; i++) {
+            const int plyr_arr[3] = { ' ', PLYR1, PLYR2 };
+            if (!end(mrk) ^ !plyr) {
+                for (int j = 2; j < 11; j++) {
+                    if (lines[i][j - 2] == 'x') {
+                        lines[i][j] = plyr_arr[mrk[index++]];
+                    }
+                }
+            }
+            else {
+                sprintf(lines[i], "\n");
+                sprintf(lines[1], !plyr ? " SELECT MODE \n" : (end(mrk) == 2 ? "   %c WINS!  \n" : "     TIE!    \n"), plyr_arr[plyr]);
+                sprintf(lines[3], "  [1]   [2]  \n");
+                sprintf(lines[5], "  PLAYER(S)  \r");
+            }
+            printf("\33[%dG%s", (columns - 11) / 2, lines[i]);
         }
-    }
-}
-
-void main() {
-    SetWindowLongW(GetConsoleWindow(), GWL_STYLE, WS_VISIBLE | WS_SIZEBOX | WS_CAPTION | WS_SYSMENU);
-    CreateThread(NULL, 0, update_size, NULL, NULL, NULL);
-    while (1) {
-        draw();
+        if (end(mrk) || !plyr) {
+            x = (columns + 1) / 2 - (3 - 6 * mult);
+            y = (rows + 1) / 2;
+        }
+        printf("\33[%d;%dH", y, x);
         const int inp = end(mrk) || mult || plyr != 2 ? _getch() : 0;
         if (!end(mrk) && plyr) {
             if (!mult && plyr == 2) {
@@ -125,10 +106,10 @@ void main() {
                     int d = _getch() - 76;
                     if (d % 2) {
                         d *= 4;
-                        if (abs(x - (columns + 1) / 2 + d) < 5) x += d;
+                        x += (abs(x - (columns + 1) / 2 + d) < 5) ? d : -2 * d;
                     } else {
                         d /= 2;
-                        if (abs(y - (rows + 1) / 2 + d) < 3) y += d;
+                        y += (abs(y - (rows + 1) / 2 + d) < 3) ? d : -2 * d;
                     }
                     break;
                 case 13:;
