@@ -1,20 +1,23 @@
-#define _NO_CRT_STDIO_INLINE
+﻿#define _NO_CRT_STDIO_INLINE
 #define _CRT_SECURE_NO_WARNINGS
+//#define _DEBUG
+//#define _COLOR
 
 #include<stdio.h>
 #include<windows.h>
 #include<conio.h>
 
-#define PLYR1 'O'
-#define PLYR2 'X'
+#define PLYRO 'O'
+#define PLYRX 'X'
 
 int end(int mrk[]) {
     int end = 1;
     for (int i = 0; i < 9; i++) {
         const int j = 3 * i;
-        if (i < 3 && (((mrk[j] & mrk[j + 1] & mrk[j + 2])) || ((mrk[i] & mrk[i + 3] & mrk[i + 6])) || ((mrk[0] & mrk[4] & mrk[8])) || ((mrk[2] & mrk[4] & mrk[6])))) {
+        if (i < 3 && ((mrk[j] & mrk[j + 1] & mrk[j + 2]) || (mrk[i] & mrk[i + 3] & mrk[i + 6]) || ((mrk[0] & mrk[4] & mrk[8])) || ((mrk[2] & mrk[4] & mrk[6])))) {
             return 2;
-        } else if (!mrk[i]) {
+        }
+        else if (!mrk[i]) {
             end = 0;
         }
     }
@@ -23,9 +26,8 @@ int end(int mrk[]) {
 
 int minimax(int mrk[], int is_max) {
     int best = 1 - 2 * is_max;
-    const int win = end(mrk);
-    if (win) {
-        return (win - 1) * best;
+    if (end(mrk)) {
+        return (end(mrk) - 1) * best * 2;
     }
     for (int i = 0; i < 9; i++) {
         if (!mrk[i]) {
@@ -39,58 +41,43 @@ int minimax(int mrk[], int is_max) {
 }
 
 void main() {
-    int columns = 0, rows = 0, x = 0, y = 0, mrk[9] = { 0 }, mult = 0, plyr = 0;
+    int columns = 0, rows = 0, midcolumns = 0, midrows = 0, x = 0, y = 0, mrk[9] = { 0 }, mult = 0, plyr = 0;
+    #ifdef _DEBUG
+    int _d = 0, _move = 0, _bgc = 0, _fgc = 0;
+    #endif
     while (1) {
         CONSOLE_SCREEN_BUFFER_INFO info;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
-        int ncolumns = info.srWindow.Right - info.srWindow.Left + 1;
-        int nrows = info.srWindow.Bottom - info.srWindow.Top + 1;
-        x += (ncolumns + 1) / 2 - (columns + 1) / 2;
-        y += (nrows + 1) / 2 - (rows + 1) / 2;
-        columns = ncolumns;
-        rows = nrows;
-        SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), (COORD) {columns, rows});
-        printf("\33[2J\33]0; \a\33[%dH\33(0", (rows - 5) / 2);
-        char lines[7][15] = {
-            "lqqqwqqqwqqqk\n",
-            "x   x   x   x\n",
-            "tqqqnqqqnqqqu\n",
-            "x   x   x   x\n",
-            "tqqqnqqqnqqqu\n",
-            "x   x   x   x\n",
-            "mqqqvqqqvqqqj\r"
-        };
-        int index = 0;
-        for (int i = 0; i < 7; i++) {
-            const int plyr_arr[3] = { ' ', PLYR1, PLYR2 };
-            if (!end(mrk) ^ !plyr) {
-                for (int j = 2; j < 11; j++) {
-                    if (lines[i][j - 2] == 'x') {
-                        lines[i][j] = plyr_arr[mrk[index++]];
-                    }
-                }
-            }
-            else {
-                sprintf(lines[i], "\n");
-                sprintf(lines[1], !plyr ? " SELECT MODE \n" : (end(mrk) == 2 ? "   %c WINS!  \n" : "     TIE!    \n"), plyr_arr[plyr]);
-                sprintf(lines[3], "  [1]   [2]  \n");
-                sprintf(lines[5], "  PLAYER(S)  \r");
-            }
-            printf("\33[%dG%s", (columns - 11) / 2, lines[i]);
+        columns = info.dwSize.X + 1;
+        rows = info.srWindow.Bottom - info.srWindow.Top + 3;
+        x += columns / 2 - midcolumns;
+        y += rows / 2 - midrows;
+        midcolumns = columns / 2;
+        midrows = rows / 2;
+        printf("\33[?1049h\33[%dH\33(0", midrows - 3);
+        int feed = midcolumns - 6;
+        char lines[142] = "\33[%dGlqqqwqqqwqqqk\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGmqqqvqqqvqqqj";
+        if (!(!end(mrk) ^ !plyr)) {
+            sprintf(lines, "\n\33[%dG %s \n\n\33[%dG  [1]   [2]  \n\n\33[%dG  PLAYER(S)", feed, !plyr ? "SELECT MODE" : (end(mrk) == 2 ? (plyr == 1 ? "  O WINS! " : "  X WINS! ") : "    TIE!   "), feed, feed);
         }
+        const int plyr_arr[3] = { ' ', PLYRO, PLYRX };
+        printf(lines, feed, feed, plyr_arr[mrk[0]], plyr_arr[mrk[1]], plyr_arr[mrk[2]], feed, feed, plyr_arr[mrk[3]], plyr_arr[mrk[4]], plyr_arr[mrk[5]], feed, feed, plyr_arr[mrk[6]], plyr_arr[mrk[7]], plyr_arr[mrk[8]], feed);
         if (end(mrk) || !plyr) {
-            x = (columns + 1) / 2 - (3 - 6 * mult);
-            y = (rows + 1) / 2;
+            x = midcolumns - (3 - 6 * mult);
+            y = midrows;
         }
+        #ifdef _DEBUG
+        printf("\33[HMRK: %d%d%d%d%d%d%d%d%d; PLYR: %d; MULT: %d; X: %d; Y: %d; D: %d: MOVE: %d; BGC: %d; FGC: %d", mrk[0], mrk[1], mrk[2], mrk[3], mrk[4], mrk[5], mrk[6], mrk[7], mrk[8], plyr, mult, x, y, _d, _move, _bgc, _fgc);
+        #endif
         printf("\33[%d;%dH", y, x);
-        const int inp = end(mrk) || mult || plyr != 2 ? _getch() : 0;
+        int inp = mult || plyr != 2 || end(mrk) ? _getch() : 0;
         if (!end(mrk) && plyr) {
+            int move = 0, best = -1;
             if (!mult && plyr == 2) {
-                int best = -1, move;
                 for (int i = 0; i < 9; i++) {
                     if (!mrk[i]) {
                         mrk[i] = 2;
-                        const int score = minimax(mrk, 0);
+                        int score = minimax(mrk, 0);
                         mrk[i] = 0;
                         if (score > best) {
                             best = score;
@@ -98,46 +85,55 @@ void main() {
                         }
                     }
                 }
-                mrk[move] = 2;
-                plyr = ((plyr - 1) ^ !end(mrk)) + 1;
-            } else {
+            }
+            else {
                 switch (inp) {
                 case 224:;
                     int d = _getch() - 76;
+                    #ifdef _DEBUG
+                    _d = d + 76;
+                    #endif
                     if (d % 2) {
-                        d *= 4;
-                        x += (abs(x - (columns + 1) / 2 + d) < 5) ? d : -2 * d;
+                        x += (abs(x - midcolumns + (d *= 4)) < 5) ? d : -2 * d;
                     } else {
-                        d /= 2;
-                        y += (abs(y - (rows + 1) / 2 + d) < 3) ? d : -2 * d;
+                        y += (abs(y - midrows + (d /= 2)) < 3) ? d : -2 * d;
                     }
                     break;
                 case 13:;
-                    const int pos = ((y - (rows - 7) / 2) / 3) * 3 + (x - (columns - 13) / 2) % 3;
-                    if (!mrk[pos]) {
-                        plyr = (((mrk[pos] = plyr) - 1) ^ !end(mrk)) + 1;
-                    }
+                    move = ((x - midcolumns + 4) + (y - midrows + 2) * 6) / 4;
                 }
             }
-        } else {
+            if (!mult && plyr == 2 || inp == 13 && !mrk[move]) {
+                plyr = (((mrk[move] = plyr) - 1) ^ !end(mrk)) + 1;
+            }
+            #ifdef _DEBUG
+            _move = move;
+            #endif
+        }
+        else {
             switch (inp) {
             case 224:;
                 mult ^= _getch() % 2;
                 break;
             case 13:;
                 memset(mrk, 0, 36);
-                x = (columns + 1) / 2;
-                y = (rows + 1) / 2;
+                x = midcolumns;
+                y = midrows;
                 srand(GetTickCount64());
-                plyr = mult ? rand() % 2 + 1 : 1;
+                plyr = mult * (rand() % 2) + 1;
             }
         }
+        #ifdef _COLOR
         if (isxdigit(inp)) {
-            printf("%c\33[D", toupper(inp));
-            const int fgc = _getch();
-            if (isxdigit(fgc) && inp != fgc) {
-                printf("\33[48;5;%dm\33[38;5;%dm", inp % 39 - 9, fgc % 39 - 9);
+            int fgc = _getch();
+            if (isxdigit(fgc) && (inp %= 39) != (fgc %= 39)) {
+                #ifdef _DEBUG
+                _fgc = fgc - 9;
+                _bgc = inp - 9;
+                #endif
+                printf("\33[48;5;%dm\33[38;5;%dm", inp - 9, fgc - 9);
             }
         }
+        #endif
     }
 }
