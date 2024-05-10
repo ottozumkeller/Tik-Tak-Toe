@@ -12,7 +12,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 // #define _DEBUG
-// #define _COLOR
+#define _COLOR
 #define _AI
 
 #include <stdio.h>
