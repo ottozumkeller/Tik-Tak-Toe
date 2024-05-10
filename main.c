@@ -1,11 +1,23 @@
-﻿#define _NO_CRT_STDIO_INLINE
-#define _CRT_SECURE_NO_WARNINGS
-//#define _DEBUG
-//#define _COLOR
+﻿/*
+   ┌─────────────────────────┬────────┐
+   │ Best standart file size │ 1219 B │
+   ├─────────────────────────┼────────┤
+   │ Best minimal file size  │ 1160 B │
+   ├─────────────────────────┼────────┤
+   │ Best barebone file size │  981 B │
+   └─────────────────────────┴────────┘
+*/
 
-#include<stdio.h>
-#include<windows.h>
-#include<conio.h>
+#define _NO_CRT_STDIO_INLINE
+#define _CRT_SECURE_NO_WARNINGS
+
+// #define _DEBUG
+// #define _COLOR
+#define _AI
+
+#include <stdio.h>
+#include <windows.h>
+#include <conio.h>
 
 #define PLYRO 'O'
 #define PLYRX 'X'
@@ -13,17 +25,16 @@
 int end(int mrk[]) {
     int end = 1;
     for (int i = 0; i < 9; i++) {
-        const int j = 3 * i;
-        if (i < 3 && ((mrk[j] & mrk[j + 1] & mrk[j + 2]) || (mrk[i] & mrk[i + 3] & mrk[i + 6]) || ((mrk[0] & mrk[4] & mrk[8])) || ((mrk[2] & mrk[4] & mrk[6])))) {
+        if (i < 3 && ((mrk[3 * i] & mrk[3 * i + 1] & mrk[3 * i + 2]) || (mrk[i] & mrk[i + 3] & mrk[i + 6]) || (mrk[0] & mrk[4] & mrk[8]) || (mrk[2] & mrk[4] & mrk[6]))) {
             return 2;
-        }
-        else if (!mrk[i]) {
+        } else if (!mrk[i]) {
             end = 0;
         }
     }
     return end;
 }
 
+#ifdef _AI
 int minimax(int mrk[], int is_max) {
     int best = 1 - 2 * is_max;
     if (end(mrk)) {
@@ -39,17 +50,21 @@ int minimax(int mrk[], int is_max) {
     }
     return best;
 }
+#endif
 
 void main() {
-    int columns = 0, rows = 0, midcolumns = 0, midrows = 0, x = 0, y = 0, mrk[9] = { 0 }, mult = 0, plyr = 0;
+    int mrk[9] = { 0 }, mult = 0, plyr = 0, midcolumns = 0, midrows = 0, x = 0, y = 0;
+#ifndef _AI
+    mult = 1;
+#endif
     #ifdef _DEBUG
     int _d = 0, _move = 0, _bgc = 0, _fgc = 0;
     #endif
     while (1) {
         CONSOLE_SCREEN_BUFFER_INFO info;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
-        columns = info.dwSize.X + 1;
-        rows = info.srWindow.Bottom - info.srWindow.Top + 3;
+        int columns = info.srWindow.Right - info.srWindow.Left + 1;
+        int rows = info.srWindow.Bottom - info.srWindow.Top + 3;
         x += columns / 2 - midcolumns;
         y += rows / 2 - midrows;
         midcolumns = columns / 2;
@@ -57,10 +72,10 @@ void main() {
         printf("\33[?1049h\33[%dH\33(0", midrows - 3);
         int feed = midcolumns - 6;
         char lines[142] = "\33[%dGlqqqwqqqwqqqk\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGmqqqvqqqvqqqj";
-        if (!(!end(mrk) ^ !plyr)) {
+        if (!end(mrk) == !plyr) {
             sprintf(lines, "\n\33[%dG %s \n\n\33[%dG  [1]   [2]  \n\n\33[%dG  PLAYER(S)", feed, !plyr ? "SELECT MODE" : (end(mrk) == 2 ? (plyr == 1 ? "  O WINS! " : "  X WINS! ") : "    TIE!   "), feed, feed);
         }
-        const int plyr_arr[3] = { ' ', PLYRO, PLYRX };
+        static const char plyr_arr[3] = { ' ', PLYRO, PLYRX };
         printf(lines, feed, feed, plyr_arr[mrk[0]], plyr_arr[mrk[1]], plyr_arr[mrk[2]], feed, feed, plyr_arr[mrk[3]], plyr_arr[mrk[4]], plyr_arr[mrk[5]], feed, feed, plyr_arr[mrk[6]], plyr_arr[mrk[7]], plyr_arr[mrk[8]], feed);
         if (end(mrk) || !plyr) {
             x = midcolumns - (3 - 6 * mult);
@@ -73,9 +88,10 @@ void main() {
         int inp = mult || plyr != 2 || end(mrk) ? _getch() : 0;
         if (!end(mrk) && plyr) {
             int move = 0, best = -1;
+#ifdef _AI
             if (!mult && plyr == 2) {
                 for (int i = 0; i < 9; i++) {
-                    if (!mrk[i]) {
+                    if (mrk[i] == 0) {
                         mrk[i] = 2;
                         int score = minimax(mrk, 0);
                         mrk[i] = 0;
@@ -87,6 +103,7 @@ void main() {
                 }
             }
             else {
+#endif
                 switch (inp) {
                 case 224:;
                     int d = _getch() - 76;
@@ -94,15 +111,19 @@ void main() {
                     _d = d + 76;
                     #endif
                     if (d % 2) {
-                        x += (abs(x - midcolumns + (d *= 4)) < 5) ? d : -2 * d;
+                        d *= 4;
+                        x += (abs(x - midcolumns + d) < 5) ? d : -2 * d;
                     } else {
-                        y += (abs(y - midrows + (d /= 2)) < 3) ? d : -2 * d;
+                        d /= 2;
+                        y += (abs(y - midrows + d) < 3) ? d : -2 * d;
                     }
                     break;
                 case 13:;
                     move = ((x - midcolumns + 4) + (y - midrows + 2) * 6) / 4;
                 }
+#ifdef _AI
             }
+#endif
             if (!mult && plyr == 2 || inp == 13 && !mrk[move]) {
                 plyr = (((mrk[move] = plyr) - 1) ^ !end(mrk)) + 1;
             }
@@ -112,26 +133,33 @@ void main() {
         }
         else {
             switch (inp) {
+#ifdef _AI
             case 224:;
                 mult ^= _getch() % 2;
                 break;
+#endif
+#ifndef _AI
+            case 224:;
+                printf("\a");
+                break;
+#endif
             case 13:;
                 memset(mrk, 0, 36);
                 x = midcolumns;
                 y = midrows;
-                srand(GetTickCount64());
-                plyr = mult * (rand() % 2) + 1;
+                plyr = mult * (GetTickCount64() % 2) + 1;
             }
         }
         #ifdef _COLOR
         if (isxdigit(inp)) {
+            printf("%X\33[D\33[48;5;%dm", inp % 39 - 9, inp % 39 - 9);
             int fgc = _getch();
-            if (isxdigit(fgc) && (inp %= 39) != (fgc %= 39)) {
+            if (isxdigit(fgc) && inp != fgc) {
                 #ifdef _DEBUG
                 _fgc = fgc - 9;
                 _bgc = inp - 9;
                 #endif
-                printf("\33[48;5;%dm\33[38;5;%dm", inp - 9, fgc - 9);
+                printf("\33[38;5;%dm", fgc % 39 - 9);
             }
         }
         #endif
