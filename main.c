@@ -34,7 +34,6 @@ int end(int mrk[]) {
     return end;
 }
 
-#ifdef _AI
 int minimax(int mrk[], int is_max) {
     int best = 1 - 2 * is_max;
     if (end(mrk)) {
@@ -50,16 +49,15 @@ int minimax(int mrk[], int is_max) {
     }
     return best;
 }
-#endif
 
 void main() {
     int mrk[9] = { 0 }, mult = 0, plyr = 0, midcolumns = 0, midrows = 0, x = 0, y = 0;
 #ifndef _AI
     mult = 1;
 #endif
-    #ifdef _DEBUG
+#ifdef _DEBUG
     int _d = 0, _move = 0, _bgc = 0, _fgc = 0;
-    #endif
+#endif
     while (1) {
         CONSOLE_SCREEN_BUFFER_INFO info;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
@@ -81,9 +79,9 @@ void main() {
             x = midcolumns - (3 - 6 * mult);
             y = midrows;
         }
-        #ifdef _DEBUG
+#ifdef _DEBUG
         printf("\33[HMRK: %d%d%d%d%d%d%d%d%d; PLYR: %d; MULT: %d; X: %d; Y: %d; D: %d: MOVE: %d; BGC: %d; FGC: %d", mrk[0], mrk[1], mrk[2], mrk[3], mrk[4], mrk[5], mrk[6], mrk[7], mrk[8], plyr, mult, x, y, _d, _move, _bgc, _fgc);
-        #endif
+#endif
         printf("\33[%d;%dH", y, x);
         int inp = mult || plyr != 2 || end(mrk) ? _getch() : 0;
         if (!end(mrk) && plyr) {
@@ -91,7 +89,7 @@ void main() {
 #ifdef _AI
             if (!mult && plyr == 2) {
                 for (int i = 0; i < 9; i++) {
-                    if (mrk[i] == 0) {
+                    if (!mrk[i]) {
                         mrk[i] = 2;
                         int score = minimax(mrk, 0);
                         mrk[i] = 0;
@@ -107,9 +105,9 @@ void main() {
                 switch (inp) {
                 case 224:;
                     int d = _getch() - 76;
-                    #ifdef _DEBUG
+#ifdef _DEBUG
                     _d = d + 76;
-                    #endif
+#endif
                     if (d % 2) {
                         d *= 4;
                         x += (abs(x - midcolumns + d) < 5) ? d : -2 * d;
@@ -127,9 +125,9 @@ void main() {
             if (!mult && plyr == 2 || inp == 13 && !mrk[move]) {
                 plyr = (((mrk[move] = plyr) - 1) ^ !end(mrk)) + 1;
             }
-            #ifdef _DEBUG
+#ifdef _DEBUG
             _move = move;
-            #endif
+#endif
         }
         else {
             switch (inp) {
@@ -150,7 +148,7 @@ void main() {
                 plyr = mult * (GetTickCount64() % 2) + 1;
             }
         }
-        #ifdef _COLOR
+#ifdef _COLOR
         if (isxdigit(inp)) {
             printf("%X\33[D\33[48;5;%dm", inp % 39 - 9, inp % 39 - 9);
             int fgc = _getch();
@@ -162,6 +160,6 @@ void main() {
                 printf("\33[38;5;%dm", fgc % 39 - 9);
             }
         }
-        #endif
+#endif
     }
 }
