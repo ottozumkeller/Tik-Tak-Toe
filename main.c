@@ -1,10 +1,10 @@
 ﻿/*
    ┌─────────────────────────┬────────┐
-   │ Best standart file size │ 1219 B │
+   │ Best standart file size │ 1217 B │
    ├─────────────────────────┼────────┤
-   │ Best minimal file size  │ 1160 B │
+   │ Best minimal file size  │ 1150 B │
    ├─────────────────────────┼────────┤
-   │ Best barebone file size │  981 B │
+   │ Best barebone file size │  963 B │
    └─────────────────────────┴────────┘
 */
 
@@ -12,8 +12,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 // #define _DEBUG
-#define _COLOR
-#define _AI
+// #define _COLOR
+// #define _AI
 
 #include <stdio.h>
 #include <windows.h>
@@ -51,7 +51,7 @@ int minimax(int mrk[], int is_max) {
 }
 
 void main() {
-    int mrk[9] = { 0 }, mult = 0, plyr = 0, midcolumns = 0, midrows = 0, x = 0, y = 0;
+    int mrk[9] = { 0 }, mult = 0, plyr = -1, midcolumns = 0, midrows = 0, x = 0, y = 0;
 #ifndef _AI
     mult = 1;
 #endif
@@ -70,24 +70,24 @@ void main() {
         printf("\33[?1049h\33[%dH\33(0", midrows - 3);
         int feed = midcolumns - 6;
         char lines[142] = "\33[%dGlqqqwqqqwqqqk\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGtqqqnqqqnqqqu\n\33[%dGx %c x %c x %c x\n\33[%dGmqqqvqqqvqqqj";
-        if (!end(mrk) == !plyr) {
-            sprintf(lines, "\n\33[%dG %s \n\n\33[%dG  [1]   [2]  \n\n\33[%dG  PLAYER(S)", feed, !plyr ? "SELECT MODE" : (end(mrk) == 2 ? (plyr == 1 ? "  O WINS! " : "  X WINS! ") : "    TIE!   "), feed, feed);
+        if (end(mrk) || plyr == -1) {
+            sprintf(lines, "\n\33[%dG %s \n\n\33[%dG  [1]   [2]  \n\n\33[%dG  PLAYER(S)", feed, plyr == -1 ? "SELECT MODE" : (end(mrk) == 2 ? (!plyr ? "  O WINS! " : "  X WINS! ") : "    TIE!   "), feed, feed);
         }
         static const char plyr_arr[3] = { ' ', PLYRO, PLYRX };
         printf(lines, feed, feed, plyr_arr[mrk[0]], plyr_arr[mrk[1]], plyr_arr[mrk[2]], feed, feed, plyr_arr[mrk[3]], plyr_arr[mrk[4]], plyr_arr[mrk[5]], feed, feed, plyr_arr[mrk[6]], plyr_arr[mrk[7]], plyr_arr[mrk[8]], feed);
-        if (end(mrk) || !plyr) {
+        if (end(mrk) || plyr == -1) {
             x = midcolumns - (3 - 6 * mult);
             y = midrows;
         }
 #ifdef _DEBUG
-        printf("\33[HMRK: %d%d%d%d%d%d%d%d%d; PLYR: %d; MULT: %d; X: %d; Y: %d; D: %d: MOVE: %d; BGC: %d; FGC: %d", mrk[0], mrk[1], mrk[2], mrk[3], mrk[4], mrk[5], mrk[6], mrk[7], mrk[8], plyr, mult, x, y, _d, _move, _bgc, _fgc);
+        printf("\33[HMRK: %d%d%d%d%d%d%d%d%d; PLYR: %d; END: %d; MULT: %d; X: %d; Y: %d; D: %d: MOVE: %d; BGC: %d; FGC: %d", mrk[0], mrk[1], mrk[2], mrk[3], mrk[4], mrk[5], mrk[6], mrk[7], mrk[8], plyr, end(mrk), mult, x, y, _d, _move, _bgc, _fgc);
 #endif
         printf("\33[%d;%dH", y, x);
-        int inp = mult || plyr != 2 || end(mrk) ? _getch() : 0;
-        if (!end(mrk) && plyr) {
-            int move = 0, best = -1;
+        int inp = mult || plyr != 1 || end(mrk) ? _getch() : 0;
+        if (!end(mrk) && plyr != -1) {
+            int move, best = -2;
 #ifdef _AI
-            if (!mult && plyr == 2) {
+            if (!mult && plyr == 1) {
                 for (int i = 0; i < 9; i++) {
                     if (!mrk[i]) {
                         mrk[i] = 2;
@@ -99,6 +99,8 @@ void main() {
                         }
                     }
                 }
+                mrk[move] = plyr + 1;
+                plyr ^= !end(mrk);
             }
             else {
 #endif
@@ -118,13 +120,14 @@ void main() {
                     break;
                 case 13:;
                     move = ((x - midcolumns + 4) + (y - midrows + 2) * 6) / 4;
+                    if (!mrk[move]) {
+                        mrk[move] = plyr + 1;
+                        plyr ^= !end(mrk);
+                    }
                 }
 #ifdef _AI
             }
 #endif
-            if (!mult && plyr == 2 || inp == 13 && !mrk[move]) {
-                plyr = (((mrk[move] = plyr) - 1) ^ !end(mrk)) + 1;
-            }
 #ifdef _DEBUG
             _move = move;
 #endif
@@ -145,7 +148,7 @@ void main() {
                 memset(mrk, 0, 36);
                 x = midcolumns;
                 y = midrows;
-                plyr = mult * (GetTickCount64() % 2) + 1;
+                plyr = mult * (GetTickCount64() % 2);
             }
         }
 #ifdef _COLOR
