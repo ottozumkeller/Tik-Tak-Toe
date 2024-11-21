@@ -5,8 +5,6 @@
 #include <windows.h>
 #include <conio.h>
 
-#define debug(...) {char args[128]; sprintf(args, __VA_ARGS__);  OutputDebugStringA(args);}
-
 int end(int mrk[]) {
 	int end = 1;
 	for (int i = 0; i < 9; i++) {
@@ -56,9 +54,6 @@ void main() {
 			static const char plyr_arr[3] = { ' ', 'O', 'X' };
 			printf("lqqqwqqqwqqqk\33[13D\33[Bx %c x %c x %c x\33[13D\33[Btqqqnqqqnqqqu\33[13D\33[Bx %c x %c x %c x\33[13D\33[Btqqqnqqqnqqqu\33[13D\33[Bx %c x %c x %c x\33[13D\33[Bmqqqvqqqvqqqj", plyr_arr[mrk[0]], plyr_arr[mrk[1]], plyr_arr[mrk[2]], plyr_arr[mrk[3]], plyr_arr[mrk[4]], plyr_arr[mrk[5]], plyr_arr[mrk[6]], plyr_arr[mrk[7]], plyr_arr[mrk[8]]);
 		}
-		#ifdef _DEBUG
-		debug("\nMRK:  %d%d%d%d%d%d%d%d%d\nPLYR: %d\nEND:  %d\nMULT: %d\nCOLS: %d\nROWS: %d\nX:    %d\nY:    %d\n", mrk[0], mrk[1], mrk[2], mrk[3], mrk[4], mrk[5], mrk[6], mrk[7], mrk[8], plyr, end(mrk), mult, cols, rows, x, y);
-		#endif
 		printf("\33[%d;%dH", y, x);
 		if (end(mrk) || plyr == -1) {
 			switch (_getch()) {
